@@ -51,7 +51,7 @@ export default function SignUpPage() {
                 }
               }}
               routing="hash"
-              redirectUrl="/onboarding"
+              afterSignUpUrl="/onboarding"
               signInUrl="/sign-in"
             />
           </div>
