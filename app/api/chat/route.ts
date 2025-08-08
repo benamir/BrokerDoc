@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import OpenAI from 'openai';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { ontarioPurchaseAgreementFields } from '@/lib/template-data';
 
 const openai = new OpenAI({
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const { conversationId, message, fileUrl, fileName, fileType } = await request.json();
 
     // Save user message to database
-    const { data: userMessage, error: userMessageError } = await supabase
+    const { data: userMessage, error: userMessageError } = await supabaseAdmin
       .from('messages')
       .insert({
         conversation_id: conversationId,
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get conversation history for context
-    const { data: messages, error: messagesError } = await supabase
+    const { data: messages, error: messagesError } = await supabaseAdmin
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
@@ -152,7 +152,7 @@ Always be professional, accurate, and helpful. Focus on Ontario real estate requ
           const documentRequest = extractDocumentRequest(assistantContent);
           
           // Save assistant message to database
-          const { error: assistantMessageError } = await supabase
+          const { error: assistantMessageError } = await supabaseAdmin
             .from('messages')
             .insert({
               conversation_id: conversationId,
@@ -169,7 +169,7 @@ Always be professional, accurate, and helpful. Focus on Ontario real estate requ
           if (documentRequest) {
             try {
               // Save the extraction for tracking
-              await supabase
+              await supabaseAdmin
                 .from('document_extractions')
                 .insert({
                   conversation_id: conversationId,
@@ -196,7 +196,7 @@ Always be professional, accurate, and helpful. Focus on Ontario real estate requ
           // Update conversation title if it's the first exchange
           if (messages.length <= 1) {
             const title = message.length > 50 ? message.substring(0, 50) + '...' : message;
-            await supabase
+            await supabaseAdmin
               .from('conversations')
               .update({ title })
               .eq('id', conversationId);
@@ -272,7 +272,7 @@ async function getTemplateId(templateName: string): Promise<string | null> {
       type = 'lease_agreement';
     }
     
-    const { data: template } = await supabase
+    const { data: template } = await supabaseAdmin
       .from('document_templates')
       .select('id')
       .eq('type', type)

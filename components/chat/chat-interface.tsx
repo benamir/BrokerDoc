@@ -17,11 +17,44 @@ export function ChatInterface() {
   } = useChatStore();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef(0);
+  const lastConversationIdRef = useRef<string | null>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom only when new messages arrive (not when loading conversation history)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isStreaming]);
+    const currentMessageCount = messages.length;
+    const currentConversationId = currentConversation?.id || null;
+    const hasNewMessage = currentMessageCount > prevMessageCountRef.current;
+    const isNewConversation = currentConversationId !== lastConversationIdRef.current;
+    
+    // Only scroll if:
+    // 1. Currently streaming a new message
+    // 2. A genuinely new message was added (and it's not from switching conversations)
+    if (isStreaming || (hasNewMessage && !isNewConversation && currentMessageCount > 0)) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+    
+    // Update refs
+    prevMessageCountRef.current = currentMessageCount;
+    lastConversationIdRef.current = currentConversationId;
+  }, [messages, isStreaming, currentConversation?.id]);
+
+  // Reset scroll position when switching conversations
+  useEffect(() => {
+    if (currentConversation?.id && lastConversationIdRef.current !== currentConversation.id) {
+      // Reset scroll to top when switching conversations
+      if (scrollAreaRef.current) {
+        const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollElement) {
+          scrollElement.scrollTop = 0;
+        }
+      }
+    }
+  }, [currentConversation?.id]);
 
   const handleSendMessage = async (content: string, file?: File) => {
     if (!currentConversation) return;
@@ -69,7 +102,7 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full max-h-full overflow-hidden">
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Chat Header */}
       <div className="flex-shrink-0 border-b border-gray-200 p-4 bg-white">
         <h2 className="font-semibold text-gray-900 truncate">
@@ -81,9 +114,9 @@ export function ChatInterface() {
       </div>
 
       {/* Messages Area - Scrollable */}
-      <div className="flex-1 overflow-hidden bg-gray-50">
-        <ScrollArea className="h-full">
-          <div className="p-4 space-y-4 min-h-full">
+      <div className="flex-1 min-h-0 bg-gray-50">
+        <ScrollArea className="h-full" ref={scrollAreaRef}>
+          <div className="p-4 space-y-4">
             {messages.length === 0 ? (
               <div className="text-center py-12">
                 <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
@@ -109,7 +142,7 @@ export function ChatInterface() {
                 />
               ))
             )}
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="h-4" />
           </div>
         </ScrollArea>
       </div>

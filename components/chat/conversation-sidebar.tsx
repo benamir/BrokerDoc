@@ -59,7 +59,12 @@ export function ConversationSidebar({ user, onNewConversation, isCollapsed = fal
     if (currentConversation?.id === conversation.id) return;
     
     setCurrentConversation(conversation);
-    await loadConversation(conversation.id);
+    try {
+      await loadConversation(conversation.id);
+    } catch (error) {
+      // If loading fails, the loadConversation function will handle cleanup
+      console.log('Conversation no longer exists or failed to load');
+    }
   };
 
   const handleDeleteConversation = async (conversationId: string, e: React.MouseEvent) => {
@@ -91,7 +96,7 @@ export function ConversationSidebar({ user, onNewConversation, isCollapsed = fal
 
   return (
     <div className={`relative bg-gray-800 text-white flex flex-col h-full transition-all duration-200 ease-in-out ${
-      isCollapsed ? 'w-12' : 'w-80'
+      isCollapsed ? 'w-12' : 'w-64'
     }`}>
       {/* Toggle Button */}
       <div className="absolute top-4 -right-3 z-10">
@@ -156,66 +161,68 @@ export function ConversationSidebar({ user, onNewConversation, isCollapsed = fal
       )}
 
       {/* Conversations List */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {!isCollapsed && (
           <>
-            <div className="px-4 py-2">
+            <div className="px-4 py-2 flex-shrink-0">
               <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Recents</h3>
             </div>
-            <ScrollArea className="flex-1">
-              <div className="px-2 pb-2 space-y-1">
-                {conversations.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
-                    <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">No conversations yet</p>
-                  </div>
-                ) : (
-                  conversations.map((conversation) => (
-                    <div
-                      key={conversation.id}
-                      onClick={() => handleConversationClick(conversation)}
-                      className={`group relative p-2 rounded-md cursor-pointer transition-colors ${
-                        currentConversation?.id === conversation.id
-                          ? 'bg-gray-700'
-                          : 'hover:bg-gray-700'
-                      }`}
-                    >
-                      <div className="pr-6">
-                        <h3 className="text-sm text-white truncate">
-                          {conversation.title}
-                        </h3>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatDistanceToNow(new Date(conversation.updated_at), { addSuffix: true })}
-                        </p>
-                      </div>
-                      
-                      {/* Delete button */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="px-2 pb-2 space-y-1">
+                  {conversations.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No conversations yet</p>
                     </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
+                  ) : (
+                    conversations.map((conversation) => (
+                      <div
+                        key={conversation.id}
+                        onClick={() => handleConversationClick(conversation)}
+                        className={`group relative mx-2 p-2 rounded-md cursor-pointer transition-colors ${
+                          currentConversation?.id === conversation.id
+                            ? 'bg-gray-700'
+                            : 'hover:bg-gray-700'
+                        }`}
+                      >
+                        <div className="pr-6">
+                          <h3 className="text-sm text-white truncate">
+                            {conversation.title}
+                          </h3>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {formatDistanceToNow(new Date(conversation.updated_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                        
+                        {/* Delete button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                          className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           </>
         )}
 
         {/* Collapsed state indicator */}
         {isCollapsed && conversations.length > 0 && (
-          <div className="flex flex-col items-center py-4 space-y-2">
+          <div className="flex-1 flex flex-col items-center py-4 space-y-2 overflow-y-auto">
             {conversations.slice(0, 4).map((conversation) => (
               <Button
                 key={conversation.id}
                 onClick={() => handleConversationClick(conversation)}
                 variant="ghost"
                 size="sm"
-                className={`w-8 h-8 p-0 rounded-md ${
+                className={`w-8 h-8 p-0 rounded-md flex-shrink-0 ${
                   currentConversation?.id === conversation.id 
                     ? 'bg-gray-700 text-white' 
                     : 'text-gray-400 hover:bg-gray-700 hover:text-white'
@@ -226,7 +233,7 @@ export function ConversationSidebar({ user, onNewConversation, isCollapsed = fal
               </Button>
             ))}
             {conversations.length > 4 && (
-              <div className="text-xs text-gray-500 text-center mt-2">
+              <div className="text-xs text-gray-500 text-center mt-2 flex-shrink-0">
                 +{conversations.length - 4}
               </div>
             )}
@@ -235,7 +242,7 @@ export function ConversationSidebar({ user, onNewConversation, isCollapsed = fal
       </div>
 
       {/* User Profile at Bottom */}
-      <div className={`border-t border-gray-700 ${isCollapsed ? 'p-2' : 'p-4'}`}>
+      <div className={`flex-shrink-0 border-t border-gray-700 ${isCollapsed ? 'p-2' : 'p-4'}`}>
         {isCollapsed ? (
           <div className="flex justify-center">
             <UserButton 

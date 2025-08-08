@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed:templates": "node scripts/seed-templates.mjs"
+    "seed:templates": "node scripts/seed-templates.mjs",
+    "fix:template-url": "node scripts/fix-template-url.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.29.0",

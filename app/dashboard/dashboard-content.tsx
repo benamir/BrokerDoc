@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChatInterface } from '@/components/chat/chat-interface';
 import { ConversationSidebar } from '@/components/chat/conversation-sidebar';
 import { DocumentPreviewComponent } from '@/components/documents/document-preview';
+// Removed DocumentTestButton import - using real AI chat flow now
 import { useChatStore } from '@/lib/chat-store';
 import { useDocumentStore } from '@/lib/document-store';
 // Define a simplified user type for client components
@@ -56,6 +57,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
 
   return (
     <div className="flex h-full relative">
+      {/* Left Sidebar - Claude-like narrow width */}
       <ConversationSidebar 
         user={user}
         onNewConversation={handleNewConversation}
@@ -63,19 +65,27 @@ export function DashboardContent({ user }: DashboardContentProps) {
         onToggle={toggleSidebar}
       />
       
-      <div className="flex-1 flex">
-        <ChatInterface />
+      {/* Main Content Area */}
+      <div className="flex-1 flex h-full min-w-0">
+        {/* Chat Interface - Takes remaining space when no preview */}
+        <div className={`flex flex-col h-full transition-all duration-300 ease-in-out ${
+          isPreviewOpen && currentDocument ? 'w-[35%]' : 'w-full'
+        }`}>
+          <ChatInterface />
+        </div>
         
-        {/* Document Preview Panel */}
+        {/* Document Preview Panel - Larger right panel for better document viewing */}
         {isPreviewOpen && currentDocument && (
-          <DocumentPreviewComponent
-            document={currentDocument}
-            preview={currentPreview}
-            onEdit={updateDocumentField}
-            onFinalize={finalizeDocument}
-            onClose={handleClosePreview}
-            isLoading={isGenerating}
-          />
+          <div className="w-[49%] h-full border-l border-gray-200 bg-white flex-shrink-0">
+            <DocumentPreviewComponent
+              document={currentDocument}
+              preview={currentPreview}
+              onEdit={updateDocumentField}
+              onFinalize={finalizeDocument}
+              onClose={handleClosePreview}
+              isLoading={isGenerating}
+            />
+          </div>
         )}
       </div>
     </div>

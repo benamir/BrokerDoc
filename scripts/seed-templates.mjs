@@ -298,7 +298,7 @@ const ontarioPurchaseAgreementTemplate = {
   region: 'ontario',
   version: '2024.1',
   description: 'Standard OREA Agreement of Purchase and Sale for residential properties in Ontario',
-  pdf_form_url: '/templates/ontario-purchase-agreement-2024.pdf',
+  pdf_form_url: 'https://vnjzyiucwrfuzdhhqztu.supabase.co/storage/v1/object/public/pdf-templates/ontario-purchase-agreement-2024.pdf',
   required_fields: ontarioPurchaseAgreementFields.filter(field => field.validation?.required),
   optional_fields: ontarioPurchaseAgreementFields.filter(field => !field.validation?.required),
   is_active: true

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +15,16 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { GeneratedDocument, DocumentPreview, ValidationIssue } from '@/types';
+
+// Dynamically import PDF viewer to avoid SSR issues
+const PDFViewer = dynamic(() => import('./pdf-viewer').then(mod => ({ default: mod.PDFViewer })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64 border rounded-lg bg-gray-50">
+      <div className="text-sm text-gray-600">Loading PDF viewer...</div>
+    </div>
+  )
+});
 
 interface DocumentPreviewProps {
   document: GeneratedDocument | null;
@@ -44,7 +55,7 @@ export function DocumentPreviewComponent({
   const hasWarnings = validationIssues.some(issue => issue.severity === 'warning');
 
   return (
-    <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-full">
+    <div className="w-full bg-white flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
@@ -140,11 +151,19 @@ export function DocumentPreviewComponent({
                       </a>
                     </Button>
                   </div>
-                  <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">
-                      Click "Open PDF" to view the filled document
-                    </p>
+                  
+                  {/* PDF Viewer - Simple iframe approach */}
+                  <div className="border rounded-lg bg-gray-50 p-2">
+                    <div className="bg-white border rounded text-center">
+                      <iframe
+                        src={document.pdf_url}
+                        width="100%"
+                        height="500"
+                        style={{ border: 'none' }}
+                        title="PDF Document"
+                        className="rounded"
+                      />
+                    </div>
                   </div>
                 </Card>
 

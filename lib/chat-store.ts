@@ -188,6 +188,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
                 get().updateMessage(assistantMessage.id, { content: assistantContent });
               } else if (parsed.action === 'document_generation') {
                 // Handle document generation request
+                console.log('Document generation triggered:', parsed.request);
                 handleDocumentGeneration(parsed.request, currentConversation.id);
               }
             } catch (e) {
@@ -195,6 +196,13 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
             }
           }
         }
+      }
+
+      // After streaming is complete, check if the AI response contains document generation JSON
+      const documentRequest = extractDocumentRequestFromContent(assistantContent);
+      if (documentRequest) {
+        console.log('Document generation detected in AI response:', documentRequest);
+        await handleDocumentGeneration(documentRequest, currentConversation.id);
       }
 
     } catch (error) {
@@ -222,6 +230,24 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
         fetch(`/api/conversations/${conversationId}/messages`)
       ]);
 
+      // If conversation doesn't exist (404), remove it from local state
+      if (conversationResponse.status === 404 || messagesResponse.status === 404) {
+        console.log(`Conversation ${conversationId} not found, removing from local state`);
+        
+        // Remove the conversation from the local conversations list
+        const currentConversations = get().conversations;
+        const updatedConversations = currentConversations.filter(c => c.id !== conversationId);
+        get().setConversations(updatedConversations);
+        
+        // Clear current conversation if it was the deleted one
+        if (get().currentConversation?.id === conversationId) {
+          get().setCurrentConversation(null);
+          get().setMessages([]);
+        }
+        
+        return;
+      }
+
       if (!conversationResponse.ok || !messagesResponse.ok) {
         throw new Error('Failed to load conversation');
       }
@@ -233,11 +259,38 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       get().setMessages(messages);
     } catch (error) {
       console.error('Failed to load conversation:', error);
+      
+      // If there's an error, also remove from local state as a safety measure
+      const currentConversations = get().conversations;
+      const updatedConversations = currentConversations.filter(c => c.id !== conversationId);
+      if (updatedConversations.length !== currentConversations.length) {
+        get().setConversations(updatedConversations);
+      }
     } finally {
       get().setIsLoading(false);
     }
   },
 }));
+
+// Helper function to extract document generation requests from AI response content
+function extractDocumentRequestFromContent(content: string): any | null {
+  try {
+    // Look for JSON code blocks in the AI response
+    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      const jsonContent = jsonMatch[1];
+      const parsed = JSON.parse(jsonContent);
+      
+      if (parsed.action === 'generate_document' && parsed.template && parsed.data) {
+        return parsed;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error parsing document request from content:', error);
+    return null;
+  }
+}
 
 // Helper function to handle document generation requests
 async function handleDocumentGeneration(request: any, conversationId: string) {

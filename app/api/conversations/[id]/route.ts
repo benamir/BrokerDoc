@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const { data: conversation, error } = await supabase
+    const { data: conversation, error } = await supabaseAdmin
       .from('conversations')
       .select('*')
       .eq('id', id)
@@ -43,7 +43,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('conversations')
       .delete()
       .eq('id', id)

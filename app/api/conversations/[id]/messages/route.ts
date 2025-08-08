@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +14,7 @@ export async function GET(
 
     const { id } = await params;
     // Verify user owns the conversation
-    const { data: conversation, error: convError } = await supabase
+    const { data: conversation, error: convError } = await supabaseAdmin
       .from('conversations')
       .select('id')
       .eq('id', id)
@@ -25,7 +25,7 @@ export async function GET(
       return new NextResponse('Conversation not found', { status: 404 });
     }
 
-    const { data: messages, error } = await supabase
+    const { data: messages, error } = await supabaseAdmin
       .from('messages')
       .select('*')
       .eq('conversation_id', id)
