@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { ChatInterface } from '@/components/chat/chat-interface';
 import { ConversationSidebar } from '@/components/chat/conversation-sidebar';
+import { DocumentPreviewComponent } from '@/components/documents/document-preview';
 import { useChatStore } from '@/lib/chat-store';
+import { useDocumentStore } from '@/lib/document-store';
 // Define a simplified user type for client components
 interface UserData {
   id: string;
@@ -23,9 +25,21 @@ interface DashboardContentProps {
 export function DashboardContent({ user }: DashboardContentProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { createNewConversation } = useChatStore();
+  const { 
+    currentDocument, 
+    currentPreview, 
+    isPreviewOpen, 
+    isGenerating,
+    setPreviewOpen,
+    updateDocumentField,
+    finalizeDocument,
+    resetDocumentState
+  } = useDocumentStore();
 
   const handleNewConversation = async () => {
     try {
+      // Reset document state when starting a new conversation
+      resetDocumentState();
       await createNewConversation();
     } catch (error) {
       console.error('Failed to create new conversation:', error);
@@ -36,6 +50,10 @@ export function DashboardContent({ user }: DashboardContentProps) {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  const handleClosePreview = () => {
+    setPreviewOpen(false);
+  };
+
   return (
     <div className="flex h-full relative">
       <ConversationSidebar 
@@ -44,7 +62,22 @@ export function DashboardContent({ user }: DashboardContentProps) {
         isCollapsed={isSidebarCollapsed}
         onToggle={toggleSidebar}
       />
-      <ChatInterface />
+      
+      <div className="flex-1 flex">
+        <ChatInterface />
+        
+        {/* Document Preview Panel */}
+        {isPreviewOpen && currentDocument && (
+          <DocumentPreviewComponent
+            document={currentDocument}
+            preview={currentPreview}
+            onEdit={updateDocumentField}
+            onFinalize={finalizeDocument}
+            onClose={handleClosePreview}
+            isLoading={isGenerating}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -186,6 +186,9 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
               if (parsed.content) {
                 assistantContent += parsed.content;
                 get().updateMessage(assistantMessage.id, { content: assistantContent });
+              } else if (parsed.action === 'document_generation') {
+                // Handle document generation request
+                handleDocumentGeneration(parsed.request, currentConversation.id);
               }
             } catch (e) {
               // Ignore parsing errors for streaming
@@ -235,3 +238,34 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     }
   },
 }));
+
+// Helper function to handle document generation requests
+async function handleDocumentGeneration(request: any, conversationId: string) {
+  try {
+    // Import the document store dynamically to avoid circular dependencies
+    const { useDocumentStore } = await import('./document-store');
+    const { generateDocument, loadTemplates } = useDocumentStore.getState();
+
+    // Load templates if not already loaded
+    await loadTemplates();
+
+    // Get the template ID based on the request
+    let templateId = null;
+    
+    if (request.template === 'ontario_purchase_agreement') {
+      const response = await fetch('/api/templates?type=purchase_agreement&region=ontario');
+      if (response.ok) {
+        const templates = await response.json();
+        templateId = templates[0]?.id;
+      }
+    }
+
+    if (templateId && request.data) {
+      // Generate the document
+      await generateDocument(templateId, request.data, conversationId);
+    }
+
+  } catch (error) {
+    console.error('Failed to handle document generation:', error);
+  }
+}

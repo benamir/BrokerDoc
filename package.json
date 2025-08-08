@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:templates": "node scripts/seed-templates.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.29.0",
@@ -18,12 +19,16 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.1",
     "lucide-react": "^0.537.0",
     "next": "15.4.6",
     "openai": "^5.12.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.54",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-dropzone": "^14.3.8",
+    "react-pdf": "^10.0.1",
     "tailwind-merge": "^3.3.1",
     "zustand": "^5.0.7"
   },
